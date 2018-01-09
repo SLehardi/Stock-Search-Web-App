@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="stockModule">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stock Search</title>
+    <meta name="description" content="Stock Information">
+    <meta name="author" content="Sam Lehardi">
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Angular Style -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.1.1/angular-material.min.css" />
+    <!-- Bootstrap 4-->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+    <script src="https://use.fontawesome.com/e376d7937b.js"></script>
+
+    <!-- AngularJS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-aria.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-animate.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.1.1/angular-material.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- HighCharts -->
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+    <script src='http://connect.facebook.net/en_US/all.js'></script>
+    <script src= "script.js" type="text/JavaScript"></script>
+
+  </head>
+
+  <body ng-app='stockModule' layout="column"  ng-controller="autocompleteController as ctrl" id="main">
+    <div class = "master">
+      <div class = "container rounded header cborder">
+        <h5 class ="text-center">Stock Market Search</h5>
+        <md-content class="md-padding  white">
+          <form name="stockForm " class="row">
+            <div class="col-md-3 col-xs-4">
+              <label for="symbol">Enter Stock Ticker Symbol:<span class="red">*</span></label>
+            </div>
+            <!-- Auto Complete Function Seach-->
+            <div class="form-group col-md-6 col-xs-4">
+              <md-autocomplete flex
+                  required
+                  md-selected-item="ctrl.selectedItem"
+                  md-search-text="ctrl.searchText"
+                  md-items="item in ctrl.querySearch(ctrl.searchText)"
+                  md-item-text="item.Symbol"
+                  md-delay="300"
+                  md-input-id="symbol"
+                  md-input-name="symbol"
+                  placeholder="e.g. AAPL">
+                <div layout="row" class="item" layout-align="start center">
+                  <span md-highlight-text="ctrl.searchText">{{item.Symbol +" - "+item.Name +" ("+item.Exchange+")"}}</span>
+                </div>
+              </md-autocomplete>
+              <span ng-show= "stockForm.symbol.$invalid && stockForm.symbol.$touched">Please enter a stock ticker symbol.</span>
+              <br>
+            </div>
+            <div class=" col-md-3 col-xs-4">
+              <button class= "btn btn-primary " ng-click="search();isShow1 =true;isShow2=false" id="search" ng-disabled="stockForm.symbol.$invalid"
+              type="submit" name="getquote"><i class="fa fa-search" aria-hidden="true"></i> Get Quote</button>
+              <button class= "btn btn-secondary" ng-click="ctrl.clear(); isShow1 =false;isShow2=true" onclick="clearData()" id="clear" name="clear" ng-disabled="stockForm.symbol.$invalid">
+              <i class="fa fa-refresh" aria-hidden="true" ></i> Clear</button>
+            </div>
+            </form>
+          </md-content>
+      </div>
+      <div class="container p0">
+        <hr class="line">
+      </div>
+      <!-- Container for Stock Details -->
+      <div class="container rounded cborder white">
+        <div class="card animation slide-left float-center" ng-show="isShow1" ng-animate="'slide-right'">
+          <div class="card-header text-center">
+            <button class= "btn btn-secondary btn-sm float-left" id="left" name="left" ng-click ="isShow1 =false;isShow2=true" ng-class ="slide-right"><i class="fa fa-chevron-left" aria-hidden="true"></i></button>
+            <span > <b>Stock Details</b> </span>
+          </div>
+          <div class="pills">
+            <ul class="nav nav-pills" role="tablist">
+              <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#details" role="tab"><i class="fa fa-tachometer" aria-hidden="true"></i> Current Stock</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#historicMaster" role="tab"><i class="fa fa-bar-chart" aria-hidden="true"></i> Historical Charts</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#newsMaster" role="tab"><i class="fa fa-link" aria-hidden="true"></i> News Feed</a>
+              </li>
+            </ul>
+            <hr>
+          </div>
+          <div class = "tab-content">
+            <div class="tab-pane active" id="details" role="tabpanel">
+              <div class="row">
+                <div class="col-sm-6 col-xs-12 pl10">
+                  <table id="tableId" class="col-sm-12 table table-striped">
+                    <thead>
+                      <tr>
+                        <div id=thead>
+                          <b> Stock Details </b>
+                          <!-- FB Post Button -->
+                          <button class="btn btn-secondary float-right btn-detail" id="shareBtn" ng-click="fbPost()"><img class ="fb" src="http://cs-server.usc.edu:45678/hw/hw8/images/facebook.png"></button>
+                          <!-- Favorites Button -->
+                          <button class="btn btn-secondary float-right btn-detail" id="btn-star" ng-click="storeFavorite(ctrl.searchText)">
+                            <span ng-if="isFavorite(ctrl.searchText)" ><i class="fa fa-star fa-2x" aria-hidden="true"></i></span>
+                            <span ng-if="!isFavorite(ctrl.searchText)"><i class="fa fa-star-o fa-2x " aria-hidden="true"></i></span>
+                          </button>
+                        </div>
+                      </tr>
+                    </thead>
+                    <tbody id="stockTable">
+                      <div class="alertMessage1" id="alerttable">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get current stock Data.
+                        </div>
+                      </div>
+                      <div class ="bar1" id="bartable">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- Tablist for Chart Types -->
+                <div class="col-sm-6 col-xs-12">
+                  <ul class="nav nav-tabs row m10" role="tablist">
+                    <li class="nav-item col-xs-2" >
+                      <a class="nav-link active" data-toggle="tab" href="#hc1M" role="tab" ng-click=switchFunction(1)>Price</a>
+                    </li>
+                    <li class="nav-item col-xs-2" >
+                      <a class="nav-link" data-toggle="tab" href="#hc2M" role="tab" ng-click=switchFunction(2)>SMA</a>
+                    </li>
+                    <li class="nav-item col-xs-2">
+                      <a class="nav-link" data-toggle="tab" href="#hc3M" role="tab" ng-click=switchFunction(3)>EMA</a>
+                    </li>
+                    <li class="nav-item col-xs-2">
+                      <a class="nav-link" data-toggle="tab" href="#hc4M" role="tab" ng-click=switchFunction(4)>STOCH</a>
+                    </li>
+                    <li class="nav-item col-xs-2">
+                      <a class="nav-link" data-toggle="tab" href="#hc5M" role="tab" ng-click=switchFunction(5)>RSI</a>
+                    </li>
+                    <li class="nav-item col-xs-2">
+                      <a class="nav-link" data-toggle="tab" href="#hc6M" role="tab" ng-click=switchFunction(6)>ADX</a>
+                    </li>
+                    <li class="nav-item col-xs-2">
+                      <a class="nav-link" data-toggle="tab" href="#hc7M" role="tab" ng-click=switchFunction(7)>CCI</a>
+                    </li>
+                    <li class="nav-item col-xs-2">
+                      <a class="nav-link" data-toggle="tab" href="#hc8M" role="tab" ng-click=switchFunction(8)>BBANDS</a>
+                    </li>
+                    <li class="nav-item col-xs-2">
+                      <a class="nav-link" data-toggle="tab" href="#hc9M" role="tab" ng-click=switchFunction(9)>MACD</a>
+                    </li>
+                  </ul>
+                  <div class="tab-content col-sm-12" id="hc">
+                    <div class="tab-pane active" id="hc1M" role="tabpanel">
+                      <div class="alertMessage" id="alerthc1">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get Price data.
+                        </div>
+                      </div>
+                      <div class ="barhc" id="barhc1">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc1">
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="hc2M" role="tabpanel">
+                      <div class="alertMessage" id="alerthc2">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get SMA data.
+                        </div>
+                      </div>
+                      <div class ="barhc" id="barhc2">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc2">
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="hc3M" role="tabpanel">
+                      <div class ="barhc" id="barhc3">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc3">
+                      </div>
+                      <div class="alertMessage" id="alerthc3">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get EMA data.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="hc4M" role="tabpanel">
+                      <div class ="barhc" id="barhc4">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc4">
+                      </div>
+                      <div class="alertMessage" id="alerthc4">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get STOCH data.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="hc5M" role="tabpanel">
+                      <div class ="barhc" id="barhc5">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc5">
+                      </div>
+                      <div class="alertMessage" id="alerthc5">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get RSI data.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="hc6M" role="tabpanel">
+                      <div class ="barhc" id="barhc6">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc6">
+                      </div>
+                      <div class="alertMessage" id="alerthc6">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get ADX data.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="hc7M" role="tabpanel">
+                      <div class ="barhc" id="barhc7">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc7">
+                      </div>
+                      <div class="alertMessage" id="alerthc7">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get CCI data.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="hc8M" role="tabpanel">
+                      <div class ="barhc" id="barhc8">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc8">
+                      </div>
+                      <div class="alertMessage" id="alerthc8">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get BBANDS data.
+                        </div>
+                      </div>
+                    </div>
+                    <div class="tab-pane" id="hc9M" role="tabpanel">
+                      <div class ="barhc" id="barhc9">
+                        <div class="progress">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                        </div>
+                      </div>
+                      <div class ="chartPane" id="hc9">
+                      </div>
+                      <div class="alertMessage" id="alerthc9">
+                        <div class="alert alert-danger"role="alert">
+                          Error! Failed to get MACD data.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Panes for three tabs -->
+            <div class="tab-pane" id="historicMaster" role="tabpanel">
+              <div id="historic">
+              </div>
+              <div class="alertMessage" id="alerthistoric">
+                <div class="alert alert-danger" role="alert">
+                  Error! Failed to get historical charts data.
+                </div>
+              </div>
+              <div class ="bar" id="barhist">
+                <div class="progress">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="newsMaster" role="tabpanel">
+              <div class ="bar" id="barnews">
+                <div class="progress">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%"></div>
+                </div>
+              </div>
+              <div id="news">
+              </div>
+              <div class="alertMessage" id="alertNews">
+                <div class="alert alert-danger" role="alert">
+                  Error! Failed to get news feed data.
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+        <!-- Favorites View -->
+        <div class="card animation slide-left float-center" ng-show="isShow2" ng-animate="'slide-left'">
+          <div class="card-header text-left float-center">
+            <span ><b>Favorite List </b></span>
+            <!-- Change View Button -->
+              <button class= "btn btn-secondary btn-sm float-right btn-detail" id="right" name="right" ng-click ="isShow1 =true;isShow2=false" ng-class ="slide-left"><i class="fa fa-chevron-right" aria-hidden="true"></i></button>
+              <!-- Refresh Button -->
+              <button class= "btn btn-secondary btn-sm float-right btn-detail" id="refresh" name="refresh" ng-click="refreshFavorite()"><i class="fa fa-refresh" aria-hidden="true" ></i></button>
+              <div class ="float-right">
+                <!-- Auto refresh Button -->
+                <md-switch ng-model="toggle.switch" class="md-primary float-right" ng-change="onToggle(toggle.switch)" aria-label="Switch">
+                </md-switch>
+                <label class="float-right hidden-md-down">Automatic Refresh:</label>
+              </div>
+          </div>
+          <!-- Sorting -->
+          <div class="col-xs-12 favTable">
+            <div class="form-group row sortHeader">
+              <div class="col-sm-2">
+                <label >Sort by:</label>
+              </div>
+              <div class="col-sm-3">
+                <select class="form-control " ng-model="sortExpression" id="order" ng-change="selectedDisable()">
+                  <option id="default" selected="selected" value="">Default</option>
+                  <option value="symbol">Symbol</option>
+                  <option value="lastprice">Price</option>
+                  <option value="change">Change</option>
+                  <option value="changeper">Change Percent</option>
+                  <option value="volume">Volume</option>
+                </select>
+              </div>
+              <div class="col-sm-2">
+                <label>Order:</label>
+              </div>
+              <div class="col-sm-3">
+                <select class="form-control"  ng-options="option for option in listOfOptions"
+                  ng-model="selectedItem" ng-change="selectedItemChanged()" ng-disabled="disable">
+                </select>
+              </div>
+           </div>
+            <table id="tableFave" class="col-sm-12 table table-striped">
+              <tr>
+                  <td id="tdFave"><b>Symbol</b></td>
+                  <td id="tdFave"><b>Stock Price</b></td>
+                  <td id="tdFave"><b>Change (Change Percent)</b></td>
+                  <td id="tdFave" class="hidden-md-down"><b>Volume</b></td>
+                  <td id="tdFave" class="hidden-md-down"></td>
+              </tr>
+              <tr ng-repeat="item in stockFavorites | orderBy:mySortFunction:reverse">
+                  <td id="tdFave" ><a href="#" ng-click="textFavorite(item.symbol); slide()" id="searchFavorite" ng-class ="slide-left">{{ item.symbol}}</a>
+                  </td>
+                  <td id="tdFave">
+                    {{ item.lastprice}}
+                  </td>
+                  <td id="tdFave1">
+                    <span ng-if="isPositive(item.change)" ><font color="red">{{ item.change+" ("+item.changeper+"%) "}}</font><img id='stockArrow' src='http://cs-server.usc.edu:45678/hw/hw8/images/Down.png'></img></span>
+                    <span ng-if="!isPositive(item.change)"><font color="green">{{ item.change+" ("+item.changeper+"%) "}}</font><img id='stockArrow' src='http://cs-server.usc.edu:45678/hw/hw8/images/Up.png'></img></span>
+                  </td>
+                  <td id="tdFave" class="hidden-md-down">{{ item.volume | number : fractionSize}}
+                  </td>
+                  <td class="hidden-md-down">
+                      <button ng-click="deleteFavorite(item)" class="btn btn-secondary btn-sm btn-detail"><i class="fa fa-trash" aria-hidden="true"></i></button>
+                  </td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="container">
+      </div>
+    </div>
+  </body>
+
+</html>
