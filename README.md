@@ -3,3 +3,6 @@ Responsive stock search web application calling REST APIS and using AngularJS, J
 
 ## Website
 Website is hosted on Amazon Web Services: http://lehardistock.us-east-2.elasticbeanstalk.com/
+
+### Back-end
+Back-end is run through Amazon Web Services Elastic Bean Stalk environment utilizing "stocksearch.php" file
